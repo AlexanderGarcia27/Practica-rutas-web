@@ -1,0 +1,144 @@
+/* Fondo completo */
+.login-bg {
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.6), rgba(0, 100, 255, 0.4)),
+                url('/assets/images/img-01.jpg') no-repeat center center fixed;
+    background-size: cover;
+    height: 100vh;
+    width: 100vw;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+
+}
+
+/* Contenedor del login */
+.login-box {
+    background-color: rgba(255, 255, 255, 0.08);
+    text-align: center;
+    width: 100%;
+    max-width: 380px;
+    padding: 40px 30px;
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 0 20px rgba(0,0,0,0.4);
+}
+
+/* Avatar centrado */
+.avatar {
+    width: 150px;
+    height: 120px;
+}
+
+/* Título */
+.login-title {
+    font-size: 22px;
+    font-weight: bold;
+    color: #fff;
+    margin-bottom: 30px;
+}
+
+/* Campos */
+.input-container {
+    position: relative;
+    margin-bottom: 20px;
+    
+}
+
+.input-container .icon {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #555;
+    font-size: 16px;
+}
+
+.input-container input {
+    width: 100%;
+    padding: 12px 12px 12px 45px;
+    border: none;
+    border-radius: 30px;
+    background-color: #6c84a4;
+    font-size: 14px;
+    outline: none;
+}
+
+input::placeholder {
+  color: white;
+}
+
+/* Botón principal */
+.login-btn {
+    width: 100%;
+    padding: 12px;
+    background-color: #111;
+    color: white;
+    border: none;
+    border-radius: 30px;
+    cursor: pointer;
+    font-weight: bold;
+    margin-top: 10px;
+    transition: background-color 0.3s;
+}
+
+.login-btn:hover {
+    background-color: #333;
+}
+
+/* Enlaces */
+.forgot-text {
+    display: block;
+    margin-top: 15px;
+    color: #ddd;
+    font-size: 12px;
+    text-decoration: none;
+}
+
+.forgot-text:hover {
+    text-decoration: underline;
+}
+
+.register-link {
+    display: inline-block;
+    margin-top: 15px;
+    color: #fff;
+    font-size: 13px;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.register-link:hover {
+    text-decoration: underline;
+}
+
+/* 📱 Responsivo */
+@media (max-width: 480px) {
+    .login-box {
+        padding: 30px 20px;
+    }
+
+    .avatar {
+        width: 80px;
+        height: 80px;
+    }
+
+    .login-title {
+        font-size: 20px;
+    }
+
+    .input-container input {
+        font-size: 13px;
+        padding: 10px 10px 10px 40px;
+    }
+
+    .login-btn {
+        font-size: 14px;
+        padding: 10px;
+    }
+
+    .register-link,
+    .forgot-text {
+        font-size: 12px;
+    }
+}
