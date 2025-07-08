@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { MapContainer, TileLayer, Marker, Polyline, useMap, useMapEvents } from "react-leaflet";
-import { collection, addDoc, getDocs } from "firebase/firestore";
+import { collection, addDoc, getDocs, query, where, deleteDoc, doc } from "firebase/firestore";
 import { auth, db } from "../firebase";
 import L from "leaflet";
 import './Panel.css';
@@ -65,9 +65,12 @@ export default function Panel() {
   const [nuevoUsuario, setNuevoUsuario] = useState({ nombre: "", email: "" });
   const [mostrarAgregarUsuario, setMostrarAgregarUsuario] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [rutasEnviadas, setRutasEnviadas] = useState([]);
+  const [rutaSeleccionada, setRutaSeleccionada] = useState(null);
 
   useEffect(() => {
     cargarUsuarios();
+    cargarRutasEnviadas();
   }, []);
 
   const cargarUsuarios = async () => {
@@ -78,6 +81,19 @@ export default function Panel() {
       setUsuarios(usuariosData);
     } catch (error) {
       console.error("Error al cargar usuarios:", error);
+    }
+  };
+
+  const cargarRutasEnviadas = async () => {
+    try {
+      if (!auth.currentUser) return;
+      const rutasRef = collection(db, "rutas");
+      const q = query(rutasRef, where("usuarioOrigen", "==", auth.currentUser.email));
+      const snapshot = await getDocs(q);
+      const rutasData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setRutasEnviadas(rutasData);
+    } catch (error) {
+      console.error("Error al cargar rutas enviadas:", error);
     }
   };
 
@@ -142,6 +158,7 @@ export default function Panel() {
       setRutaGuardada(null);
       setUsuarioSeleccionado("");
       alert("Ruta enviada exitosamente");
+      await cargarRutasEnviadas(); // Actualizar la lista de rutas enviadas
     } catch (error) {
       console.error("Error al enviar ruta:", error);
       alert("Error al enviar la ruta");
@@ -150,13 +167,37 @@ export default function Panel() {
     }
   };
 
+  const eliminarRuta = async (rutaId) => {
+    if (!window.confirm("¿Estás seguro de que deseas eliminar esta ruta?")) return;
+    try {
+      await deleteDoc(doc(db, "rutas", rutaId));
+      setRutasEnviadas(rutasEnviadas.filter(r => r.id !== rutaId));
+      if (rutaSeleccionada && rutaSeleccionada.id === rutaId) {
+        setRutaSeleccionada(null);
+      }
+    } catch (error) {
+      alert("Error al eliminar la ruta");
+      console.error(error);
+    }
+  };
+
   return (
-    <div className="panel-container">
-      <div className="panel-content-wrapper">
+    <div className="panel-container" style={{ display: "flex", flexDirection: "row", alignItems: "flex-start" }}>
+      {/* Panel principal */}
+      <div className="panel-content-wrapper" style={{ flex: 2 }}>
         <h1>Panel de rutas</h1>
         <div className="map-wrapper">
-          <Mapa ruta={ruta} setRuta={setRuta} />
+          <Mapa ruta={rutaSeleccionada ? rutaSeleccionada.puntos.map(p => [p.lat, p.lng]) : ruta} setRuta={setRuta} />
         </div>
+        {rutaSeleccionada && (
+          <button
+            className="btn btn-primary"
+            style={{ margin: "1rem 0" }}
+            onClick={() => setRutaSeleccionada(null)}
+          >
+            Quitar ruta del mapa
+          </button>
+        )}
 
         <div className="actions-container">
           <div className="controls">
@@ -199,40 +240,130 @@ export default function Panel() {
             
             <button 
               className="btn"
-              onClick={() => setMostrarAgregarUsuario(!mostrarAgregarUsuario)}
+              onClick={() => setMostrarAgregarUsuario(true)}
             >
-              {mostrarAgregarUsuario ? "Cancelar" : "Agregar usuario"}
+              Agregar usuario
             </button>
           </div>
-
-          {mostrarAgregarUsuario && (
-            <div className="add-user-form">
-              <h5 className="mb-3">Agregar Nuevo Usuario</h5>
+        </div>
+      </div>
+      {/* Panel lateral de rutas enviadas */}
+      <div className="rutas-lateral">
+        <h3>Mis rutas enviadas</h3>
+        {rutasEnviadas.length === 0 && <div style={{ color: '#888', marginTop: '1rem' }}>No has enviado rutas.</div>}
+        {rutasEnviadas.map(ruta => (
+          <div
+            key={ruta.id}
+            className="ruta-card"
+            style={{
+              background: "#f8f9fa",
+              borderRadius: "8px",
+              padding: "1rem",
+              marginBottom: "1rem",
+              cursor: "pointer",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.07)",
+              border: rutaSeleccionada && rutaSeleccionada.id === ruta.id ? '2px solid #007bff' : '1px solid #e0e0e0'
+            }}
+            onClick={() => setRutaSeleccionada(ruta)}
+          >
+            <div><b>Destino:</b> {ruta.usuarioDestino}</div>
+            <div><b>Fecha:</b> {ruta.fechaEnvio?.toDate ? ruta.fechaEnvio.toDate().toLocaleString() : String(ruta.fechaEnvio)}</div>
+            <div><b>Puntos:</b> {ruta.puntos.length}</div>
+            <button
+              className="btn btn-primary"
+              style={{
+                marginTop: "0.8rem",
+                width: "100%",
+                fontSize: "0.95rem",
+                fontWeight: 600
+              }}
+              onClick={e => {
+                e.stopPropagation();
+                eliminarRuta(ruta.id);
+              }}
+            >
+              Eliminar
+            </button>
+          </div>
+        ))}
+      </div>
+      {/* Modal para agregar usuario */}
+      {mostrarAgregarUsuario && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ background: "#fff", opacity: 1 }}>
+            <div
+              className="modal-header"
+              style={{
+                padding: "2rem 2rem 1.2rem 2rem", // top right bottom left
+                borderBottom: "1px solid #e9ecef",
+                marginBottom: "0.5rem"
+              }}
+            >
+              <h5 style={{ margin: 0, fontSize: "1.25rem", fontWeight: 600, color: "#333" }}>
+                Agregar Nuevo Usuario
+              </h5>
+              <button
+                className="modal-close-btn"
+                onClick={() => {
+                  setMostrarAgregarUsuario(false);
+                  setNuevoUsuario({ nombre: "", email: "" });
+                }}
+              >
+                ✕
+              </button>
+            </div>
+            <div
+              className="modal-body"
+              style={{
+                padding: "2rem 2rem 0.5rem 2rem",
+                paddingTop: "1.5rem"
+              }}
+            >
               <input
                 type="text"
-                className="form-control mb-2"
+                className="form-control-custom"
                 placeholder="Nombre del usuario"
                 value={nuevoUsuario.nombre}
                 onChange={(e) => setNuevoUsuario({...nuevoUsuario, nombre: e.target.value})}
               />
               <input
                 type="email"
-                className="form-control mb-2"
+                className="form-control-custom"
                 placeholder="Email del usuario"
                 value={nuevoUsuario.email}
                 onChange={(e) => setNuevoUsuario({...nuevoUsuario, email: e.target.value})}
               />
-              <button 
-                className="btn btn-success"
+            </div>
+            <div
+              className="modal-footer"
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                gap: "1rem",
+                padding: "0.5rem 2rem 2.5rem 2rem", // top right bottom left
+                marginTop: "1rem"
+              }}
+            >
+              <button
+                className="btn btn-secondary"
+                onClick={() => {
+                  setMostrarAgregarUsuario(false);
+                  setNuevoUsuario({ nombre: "", email: "" });
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                className="btn btn-primary"
                 onClick={agregarUsuario}
                 disabled={loading}
               >
                 {loading ? "Agregando..." : "Guardar Usuario"}
               </button>
             </div>
-          )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
