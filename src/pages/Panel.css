@@ -445,3 +445,133 @@ body {
   padding: 0.5rem 2rem 2.5rem 2rem; /* bottom grande */
   margin-top: 1rem;
 } 
+
+/* Panel lateral de rutas enviadas */
+.rutas-lateral {
+  flex: 1;
+  min-width: 260px;
+  max-width: 350px;
+  margin-left: 2rem;
+  background: #f4f6fa;
+  border-radius: 12px;
+  padding: 1.5rem 1rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  height: fit-content;
+}
+
+.ruta-card {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  border: 1px solid #e0e0e0;
+  transition: border 0.2s, box-shadow 0.2s;
+}
+.ruta-card.selected {
+  border: 2px solid #007bff;
+  box-shadow: 0 4px 16px rgba(0,123,255,0.08);
+}
+
+/* Responsivo para tablets y móviles */
+@media (max-width: 992px) {
+  .panel-container {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    padding: 0 !important;
+    width: 100vw;
+    min-height: 100vh;
+  }
+  .panel-content-wrapper {
+    max-width: 95vw;
+    width: 100%;
+    margin: 0 auto;
+    align-items: center;
+    justify-content: center;
+    display: flex;
+    flex-direction: column;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+  .rutas-lateral {
+    margin-left: 0;
+    margin-top: 2rem;
+    width: 100%;
+    max-width: 92vw;
+    border-radius: 10px;
+    padding: 1.2rem 1rem;
+    margin-right: 0;
+    margin-bottom: 2rem;
+    align-self: center;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  }
+}
+
+@media (max-width: 576px) {
+  .panel-container {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    padding: 0.5rem 0 !important;
+    width: 100vw;
+    min-height: 100vh;
+  }
+  .panel-content-wrapper {
+    max-width: 95vw;
+    width: 100%;
+    margin: 0 auto;
+    align-items: center;
+    justify-content: center;
+    display: flex;
+    flex-direction: column;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+  .rutas-lateral {
+    padding: 1.2rem 1rem;
+    border-radius: 10px;
+    max-width: 92vw;
+    width: 100%;
+    margin: 0 auto 2rem auto;
+    align-self: center;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  }
+} 
+
+.panel-content-wrapper h1 {
+  text-align: center;
+  width: 100%;
+}
+.actions-container, .controls {
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+} 
+
+@media (max-width: 992px) {
+  .btn,
+  .ruta-card .btn {
+    max-width: 320px;
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+  }
+}
+
+@media (max-width: 576px) {
+  .btn,
+  .ruta-card .btn {
+    max-width: 95vw;
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+  }
+} 

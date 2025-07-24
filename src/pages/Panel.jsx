@@ -4,6 +4,9 @@ import { collection, addDoc, getDocs, query, where, deleteDoc, doc } from "fireb
 import { auth, db } from "../firebase";
 import L from "leaflet";
 import './Panel.css';
+import Swal from 'sweetalert2';
+import { useNavigate } from "react-router-dom";
+import { signOut } from "firebase/auth";
 
 const iconoPersonalizado = new L.Icon({
   iconUrl: "https://cdn-icons-png.flaticon.com/512/149/149059.png",
@@ -67,6 +70,7 @@ export default function Panel() {
   const [loading, setLoading] = useState(false);
   const [rutasEnviadas, setRutasEnviadas] = useState([]);
   const [rutaSeleccionada, setRutaSeleccionada] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     cargarUsuarios();
@@ -75,8 +79,10 @@ export default function Panel() {
 
   const cargarUsuarios = async () => {
     try {
+      if (!auth.currentUser) return;
       const usuariosRef = collection(db, "usuarios");
-      const snapshot = await getDocs(usuariosRef);
+      const q = query(usuariosRef, where("owner", "==", auth.currentUser.email));
+      const snapshot = await getDocs(q);
       const usuariosData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setUsuarios(usuariosData);
     } catch (error) {
@@ -99,11 +105,11 @@ export default function Panel() {
 
   const guardarRuta = () => {
     if (ruta.length === 0) {
-      alert("Primero debes marcar una ruta en el mapa");
+      Swal.fire('Atención', 'Primero debes marcar una ruta en el mapa', 'warning');
       return;
     }
     setRutaGuardada([...ruta]);
-    alert("Ruta guardada localmente. Ahora puedes seleccionar un usuario y enviarla.");
+    Swal.fire('¡Ruta guardada!', 'Ruta guardada localmente. Ahora puedes seleccionar un usuario y enviarla.', 'success');
   };
   
   const limpiarRuta = () => {
@@ -113,7 +119,7 @@ export default function Panel() {
 
   const agregarUsuario = async () => {
     if (!nuevoUsuario.nombre || !nuevoUsuario.email) {
-      alert("Por favor completa todos los campos");
+      Swal.fire('Error', 'Por favor completa todos los campos', 'error');
       return;
     }
     setLoading(true);
@@ -121,15 +127,16 @@ export default function Panel() {
       await addDoc(collection(db, "usuarios"), {
         nombre: nuevoUsuario.nombre,
         email: nuevoUsuario.email,
-        fechaCreacion: new Date()
+        fechaCreacion: new Date(),
+        owner: auth.currentUser.email // o auth.currentUser.uid
       });
       setNuevoUsuario({ nombre: "", email: "" });
       setMostrarAgregarUsuario(false);
       await cargarUsuarios();
-      alert("Usuario agregado exitosamente");
+      Swal.fire('¡Éxito!', 'Usuario agregado exitosamente', 'success');
     } catch (error) {
       console.error("Error al agregar usuario:", error);
-      alert("Error al agregar usuario");
+      Swal.fire('Error', 'Error al agregar usuario', 'error');
     } finally {
       setLoading(false);
     }
@@ -137,11 +144,11 @@ export default function Panel() {
 
   const enviarRuta = async () => {
     if (!rutaGuardada) {
-      alert("Primero debes guardar la ruta");
+      Swal.fire('Atención', 'Primero debes guardar la ruta', 'warning');
       return;
     }
     if (!usuarioSeleccionado) {
-      alert("Debes seleccionar un usuario");
+      Swal.fire('Atención', 'Debes seleccionar un usuario', 'warning');
       return;
     }
     setLoading(true);
@@ -157,32 +164,56 @@ export default function Panel() {
       setRuta([]);
       setRutaGuardada(null);
       setUsuarioSeleccionado("");
-      alert("Ruta enviada exitosamente");
+      Swal.fire('¡Éxito!', 'Ruta enviada exitosamente', 'success');
       await cargarRutasEnviadas(); // Actualizar la lista de rutas enviadas
     } catch (error) {
       console.error("Error al enviar ruta:", error);
-      alert("Error al enviar la ruta");
+      Swal.fire('Error', 'Error al enviar la ruta', 'error');
     } finally {
       setLoading(false);
     }
   };
 
   const eliminarRuta = async (rutaId) => {
-    if (!window.confirm("¿Estás seguro de que deseas eliminar esta ruta?")) return;
+    const result = await Swal.fire({
+      title: '¿Estás seguro?',
+      text: 'Esta acción eliminará la ruta enviada. ¡No podrás revertir esto!',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar'
+    });
+    if (!result.isConfirmed) return;
     try {
       await deleteDoc(doc(db, "rutas", rutaId));
       setRutasEnviadas(rutasEnviadas.filter(r => r.id !== rutaId));
       if (rutaSeleccionada && rutaSeleccionada.id === rutaId) {
         setRutaSeleccionada(null);
       }
+      Swal.fire('Eliminado', 'La ruta ha sido eliminada.', 'success');
     } catch (error) {
-      alert("Error al eliminar la ruta");
+      Swal.fire('Error', 'Error al eliminar la ruta', 'error');
       console.error(error);
     }
   };
 
+  const handleLogout = async () => {
+    await signOut(auth);
+    navigate("/", { replace: true }); // Redirige y reemplaza el historial
+  };
+
   return (
     <div className="panel-container" style={{ display: "flex", flexDirection: "row", alignItems: "flex-start" }}>
+      {/* Botón de cerrar sesión */}
+      <button
+        className="btn btn-danger"
+        style={{ position: "absolute", top: "20px", right: "30px", zIndex: 10 }}
+        onClick={handleLogout}
+      >
+        Cerrar sesión
+      </button>
       {/* Panel principal */}
       <div className="panel-content-wrapper" style={{ flex: 2 }}>
         <h1>Panel de rutas</h1>

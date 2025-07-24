@@ -5,6 +5,7 @@ import { createUserWithEmailAndPassword } from "firebase/auth";
 import { useNavigate, Link } from "react-router-dom";
 import "../styles/LoginCustom.css"; // Usa el mismo estilo que Login
 import logo from '../assets/images/logo.jpg'
+import Swal from 'sweetalert2';
 
 const Register = () => {
   const [email, setEmail] = useState("");
@@ -13,12 +14,52 @@ const Register = () => {
 
   const handleRegister = async (e) => {
     e.preventDefault();
+
+    // Validación de campos vacíos
+    if (!email && !password) {
+      Swal.fire('Campos requeridos', 'Por favor completa todos los campos.', 'warning');
+      return;
+    }
+    if (!email) {
+      Swal.fire('Campo requerido', 'Por favor ingresa tu correo.', 'warning');
+      return;
+    }
+    if (!password) {
+      Swal.fire('Campo requerido', 'Por favor ingresa tu contraseña.', 'warning');
+      return;
+    }
+    // Validación de formato de correo
+    const emailRegex = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+    if (!emailRegex.test(email)) {
+      Swal.fire('Correo inválido', 'Por favor ingresa un correo electrónico válido.', 'warning');
+      return;
+    }
+    // Validación de longitud de contraseña
+    if (password.length < 6) {
+      Swal.fire('Contraseña muy corta', 'La contraseña debe tener al menos 6 caracteres.', 'warning');
+      return;
+    }
+
     try {
       await createUserWithEmailAndPassword(auth, email, password);
-      alert("Usuario registrado con éxito");
-      navigate("/");
+      Swal.fire({
+        title: '¡Registro exitoso!',
+        text: 'Usuario registrado con éxito.',
+        icon: 'success',
+        timer: 1500,
+        showConfirmButton: false
+      });
+      setTimeout(() => navigate("/"), 1500);
     } catch (error) {
-      alert("Error al registrar: " + error.message);
+      let msg = 'Error al registrar.';
+      if (error.code === 'auth/email-already-in-use') {
+        msg = 'El correo ya está registrado.';
+      } else if (error.code === 'auth/invalid-email') {
+        msg = 'Correo electrónico inválido.';
+      } else if (error.code === 'auth/weak-password') {
+        msg = 'La contraseña es muy débil.';
+      }
+      Swal.fire('Error', msg, 'error');
     }
   };
 
@@ -40,7 +81,6 @@ const Register = () => {
               placeholder="Correo"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              required
             />
           </div>
 
@@ -51,7 +91,6 @@ const Register = () => {
               placeholder="Contraseña"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              required
             />
           </div>
 

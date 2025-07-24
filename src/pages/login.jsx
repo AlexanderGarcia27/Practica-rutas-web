@@ -5,6 +5,7 @@ import { auth } from '../firebase';
 import { useNavigate } from 'react-router-dom';
 import '../styles/LoginCustom.css'; 
 import logo from '../assets/images/logo.jpg'// tu CSS personalizado
+import Swal from 'sweetalert2';
 
 export default function Login() {
     const [email, setEmail] = useState('');
@@ -13,11 +14,47 @@ export default function Login() {
 
     const handleLogin = async (e) => {
         e.preventDefault();
+
+        // Validación de campos vacíos
+        if (!email && !password) {
+            Swal.fire('Campos requeridos', 'Por favor completa todos los campos.', 'warning');
+            return;
+        }
+        if (!email) {
+            Swal.fire('Campo requerido', 'Por favor ingresa tu correo.', 'warning');
+            return;
+        }
+        if (!password) {
+            Swal.fire('Campo requerido', 'Por favor ingresa tu contraseña.', 'warning');
+            return;
+        }
+        // Validación de formato de correo
+        const emailRegex = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+        if (!emailRegex.test(email)) {
+            Swal.fire('Correo inválido', 'Por favor ingresa un correo electrónico válido.', 'warning');
+            return;
+        }
+
         try {
             await signInWithEmailAndPassword(auth, email, password);
-            navigate('/panel');
+            Swal.fire({
+                title: '¡Bienvenido!',
+                text: 'Inicio de sesión exitoso.',
+                icon: 'success',
+                timer: 1500,
+                showConfirmButton: false
+            });
+            setTimeout(() => navigate('/panel'), 1500);
         } catch (err) {
-            alert('Error al iniciar sesión: ' + err.message);
+            let msg = 'Error al iniciar sesión.';
+            if (err.code === 'auth/user-not-found') {
+                msg = 'El usuario no está registrado.';
+            } else if (err.code === 'auth/wrong-password') {
+                msg = 'Contraseña incorrecta.';
+            } else if (err.code === 'auth/invalid-email') {
+                msg = 'Correo electrónico inválido.';
+            }
+            Swal.fire('Error', msg, 'error');
         }
     };
 
@@ -35,7 +72,6 @@ export default function Login() {
                             placeholder="Correo"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            required
                         />
                     </div>
 
@@ -46,7 +82,6 @@ export default function Login() {
                             placeholder="Contraseña"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            required
                         />
                     </div>
 
