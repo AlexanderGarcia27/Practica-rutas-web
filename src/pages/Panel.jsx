@@ -206,17 +206,22 @@ export default function Panel() {
 
   return (
     <div className="panel-container" style={{ display: "flex", flexDirection: "row", alignItems: "flex-start" }}>
-      {/* Botón de cerrar sesión */}
+      {/* Botón de cerrar sesión SOLO visible en escritorio */}
       <button
-        className="btn btn-danger"
-        style={{ position: "absolute", top: "20px", right: "30px", zIndex: 10 }}
+        className="btn btn-danger logout-btn logout-desktop"
         onClick={handleLogout}
       >
         Cerrar sesión
       </button>
-      {/* Panel principal */}
       <div className="panel-content-wrapper" style={{ flex: 2 }}>
         <h1>Panel de rutas</h1>
+        {/* Botón de cerrar sesión SOLO visible en móvil/tablet */}
+        <button
+          className="btn btn-danger logout-btn logout-mobile"
+          onClick={handleLogout}
+        >
+          Cerrar sesión
+        </button>
         <div className="map-wrapper">
           <Mapa ruta={rutaSeleccionada ? rutaSeleccionada.puntos.map(p => [p.lat, p.lng]) : ruta} setRuta={setRuta} />
         </div>
