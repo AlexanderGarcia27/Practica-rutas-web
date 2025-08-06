@@ -620,8 +620,8 @@ body {
   display: inline-block !important;
 }
 
-/* En tablets y móviles, solo el botón móvil es visible */
-@media (max-width: 992px) {
+/* En tablets y móviles (hasta 1024px, incluye iPad Pro) */
+@media (max-width: 1024px) {
   .logout-desktop {
     display: none !important;
   }
